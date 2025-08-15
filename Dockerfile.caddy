@@ -1,0 +1,11 @@
+FROM golang:1.24-alpine AS builder
+RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+RUN xcaddy build v2.10.1-0.20250720214045-8ba7eefd0767 \
+    --with github.com/mholt/caddy-l4
+
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /go/caddy /usr/bin/caddy
+COPY caddy.json /etc/caddy/caddy.json
+EXPOSE 80 443 5432
+CMD ["caddy", "run", "--config", "/etc/caddy/caddy.json"]

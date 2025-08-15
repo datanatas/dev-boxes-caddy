@@ -1,0 +1,61 @@
+services:
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    container_name: devboxes-caddy
+    ports:
+      - "80:80"
+      # Expose DB TCP via Caddy L4
+      - "5432:5432"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./caddy.json:/etc/caddy/caddy.json:ro
+    depends_on:
+      - db
+      - portainer
+    networks:
+      - devnet
+    restart: always
+
+  db:
+    image: postgres:16-alpine
+    container_name: devboxes-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-app}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      # Optional: direct host mapping; comment out if you only want to go through Caddy
+      - "15432:5432"
+    networks:
+      - devnet
+    restart: on-failure
+
+
+  portainer:
+    image: portainer/portainer-ce:2.20.3
+    container_name: devboxes-portainer
+    command: -H unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    # Portainer internally listens on 9000 (HTTP) and 9443 (HTTPS)
+    expose:
+      - "9000"
+    networks:
+      - devnet
+    restart: always
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db_data:
+  portainer_data:
+
+networks:
+  devnet:
+    driver: bridge

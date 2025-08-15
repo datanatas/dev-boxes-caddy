@@ -1,0 +1,67 @@
+{
+  "apps": {
+    "http": {
+      "servers": {
+        "portainer": {
+          "listen": [":80"],
+          "routes": [
+            {
+              "match": [
+                {
+                  "host": ["dckr.dev.local"]
+                }
+              ],
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {
+                          "handler": "encode",
+                          "encodings": {
+                            "gzip": {}
+                          }
+                        },
+                        {
+                          "handler": "reverse_proxy",
+                          "upstreams": [
+                            {
+                              "dial": "portainer:9000"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "logs": {}
+        }
+      }
+    },
+    "layer4": {
+      "servers": {
+        "postgres": {
+          "listen": [":5432"],
+          "routes": [
+            {
+              "handle": [
+                {
+                  "handler": "proxy",
+                  "upstreams": [
+                    {
+                      "dial": ["db:5432"]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
