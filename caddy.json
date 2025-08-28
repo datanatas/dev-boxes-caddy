@@ -2,7 +2,7 @@
   "apps": {
     "http": {
       "servers": {
-        "portainer": {
+        "http_server": {
           "listen": [":80"],
           "routes": [
             {
@@ -28,6 +28,38 @@
                           "upstreams": [
                             {
                               "dial": "portainer:9000"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "match": [
+                {
+                  "host": ["ghost.dev.local"]
+                }
+              ],
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {
+                          "handler": "encode",
+                          "encodings": {
+                            "gzip": {}
+                          }
+                        },
+                        {
+                          "handler": "reverse_proxy",
+                          "upstreams": [
+                            {
+                              "dial": "ghost:2368"
                             }
                           ]
                         }
